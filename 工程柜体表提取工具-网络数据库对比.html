@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>柜体表编码提取工具 | 手动加载数据库 | 状态聚合+未找到优先</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 24px 16px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.03);
+            padding: 28px 32px;
+            margin-bottom: 28px;
+            transition: all 0.2s;
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e3c72, #2b4c7c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+
+        .sub {
+            color: #4a627a;
+            margin-top: 8px;
+            margin-bottom: 24px;
+            border-left: 4px solid #0d6efd;
+            padding-left: 16px;
+            font-size: 0.95rem;
+        }
+
+        .rule-area {
+            background: #f8fafd;
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e2edf7;
+        }
+
+        .rule-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 14px 0;
+            flex-wrap: wrap;
+        }
+
+        .rule-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #0d6efd;
+        }
+
+        button {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            margin-right: 10px;
+            margin-top: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        button:hover {
+            background: #0b5ed7;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(13,110,253,0.2);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #0d6efd;
+            border: 1px solid #0d6efd;
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: #e9f0fe;
+            transform: none;
+        }
+
+        .btn-green {
+            background: #198754;
+        }
+
+        .btn-green:hover {
+            background: #146c43;
+        }
+
+        .btn-purple {
+            background: #6f42c1;
+        }
+
+        .btn-purple:hover {
+            background: #5e37a6;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #bb2d3b;
+        }
+
+        .upload-area {
+            border: 2px dashed #9bb7d4;
+            border-radius: 24px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            background: #fefefe;
+            transition: all 0.2s;
+            margin-bottom: 18px;
+        }
+
+        .upload-area:hover {
+            background: #f5f9ff;
+            border-color: #0d6efd;
+        }
+
+        .db-info, .db-error, .db-warning, .db-empty {
+            padding: 14px 20px;
+            border-radius: 20px;
+            margin-top: 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .db-info {
+            background: #d9f0e3;
+            color: #0a5c3a;
+            border-left: 4px solid #198754;
+        }
+
+        .db-error {
+            background: #fee8e8;
+            color: #a11f2c;
+            border-left: 4px solid #dc3545;
+        }
+
+        .db-warning {
+            background: #fff0db;
+            color: #aa6f20;
+            border-left: 4px solid #ffc107;
+        }
+
+        .db-empty {
+            background: #eef2f7;
+            color: #5a6e85;
+        }
+
+        .file-list {
+            background: #f2f6fc;
+            border-radius: 28px;
+            padding: 16px 24px;
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-tag {
+            background: #0d6efd;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .file-tag .remove {
+            cursor: pointer;
+            background: rgba(255,255,255,0.25);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: 0.1s;
+        }
+
+        .file-tag .remove:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .preview-grid {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 20px;
+            border: 1px solid #e9edf2;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+        }
+
+        .status-found {
+            background: #d3f0e0;
+            color: #0f5c3a;
+            padding: 4px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-notfound {
+            background: #ffe0db;
+            color: #b13e2e;
+            padding: 4px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .stats {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 16px 24px;
+            margin: 20px 0 0;
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            font-weight: 500;
+        }
+
+        .stat span {
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: #0d6efd;
+            margin-right: 6px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #6c7a8e;
+            font-size: 0.75rem;
+            margin-top: 32px;
+            border-top: 1px solid #e2edf2;
+            padding-top: 20px;
+        }
+
+        .flex-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .badge-limit {
+            background: #e9f0fe;
+            color: #0d6efd;
+            border-radius: 40px;
+            padding: 4px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+
+        .version-badge {
+            background: #eef2ff;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        hr {
+            margin: 24px 0;
+            border: none;
+            border-top: 1px solid #e2edf2;
+        }
+
+        @media (max-width: 680px) {
+            .card {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .group-separator {
+            background: #f8f9fc;
+            font-weight: 600;
+        }
+        .group-header-row td {
+            background-color: #f1f5f9;
+            padding: 10px 12px;
+            font-weight: 600;
+            border-top: 2px solid #cbd5e1;
+            border-bottom: 2px solid #cbd5e1;
+        }
+    </style>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div style="display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+            <div>
+                <h1>📄 柜体表编码提取工具</h1>
+                <div class="badge-limit">🔍 扫描范围: A列 → N列 (限定优化)</div>
+            </div>
+            <div class="version-badge" id="liveVersionBadge">⚙️ 数据库未加载</div>
+        </div>
+        <div class="sub">提取柜体表编码，手动加载 GitHub CSV 数据库 | 结果按「软件状态」分组，<strong style="color:#dc3545;">「未找到」优先展示</strong></div>
+
+        <!-- 数据库远程位置简洁说明 -->
+        <div class="db-path" style="background:#eef3fc; border-radius: 18px; padding: 10px 16px; font-size:12px; margin-bottom:16px;">
+            <span style="margin-left: 20px;">👉 需手动点击下方按钮加载数据库</span>
+        </div>
+
+        <!-- 数据库控制栏 -->
+        <div class="flex-row">
+            <div class="button-group">
+                <button id="manualLoadDbBtn" class="btn-purple">🗄️ 加载数据库 (GitHub CSV)</button>
+                <button id="clearDbMemoryBtn" class="btn-danger">🗑️ 清空数据库</button>
+            </div>
+            <div id="dbSyncNote" style="font-size: 12px; color: #1f6392;"></div>
+        </div>
+
+        <!-- 数据库状态展示区 -->
+        <div id="dbInfoArea" class="db-empty">
+            ⚠️ 数据库未加载，请点击上方「加载数据库」按钮开始。
+        </div>
+
+        <!-- 数据库额外统计 -->
+        <div style="margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px;">
+            <span>📋 编码条目: <strong id="dbCountDisplay">0</strong></span>
+            <span>🏷️ 版本标识: <strong id="dbVersionLabel">-</strong></span>
+            <span id="lastSyncInfo" style="color:#4b6a8b;"></span>
+        </div>
+
+        <hr>
+
+        <!-- 上传提取区 -->
+        <div class="upload-area" id="extractUploadArea">
+            📂 点击或拖拽上传柜体表 Excel 文件（支持多选）<br>
+            <span style="font-size: 12px; color: #667c9e;">✨ 自动限制扫描 A列~N列，提升效率</span>
+            <input type="file" id="extractFileInput" accept=".xlsx, .xls, .csv" multiple style="display: none;">
+        </div>
+
+        <!-- 文件列表及操作栏 -->
+        <div id="fileListPanel" class="file-list" style="display: none;">
+            <span>📁 待提取文件：</span>
+            <div id="fileTagsContainer"></div>
+            <div style="flex:1"></div>
+            <button id="clearFilesBtn" class="btn-outline">清空列表</button>
+            <button id="processExtractBtn" class="btn-green">🚀 开始提取 & 比对</button>
+            <span id="processMsg" style="font-size: 12px;"></span>
+        </div>
+
+        <!-- 提取规则卡片 -->
+        <div class="rule-area">
+            <div style="font-weight: 700; margin-bottom: 12px;">🎯 编码匹配规则 (可多选)</div>
+            <div class="rule-checkbox"><input type="checkbox" id="optFormatA" checked> <label><strong>格式A</strong> : M + 两位大写字母 + 六位数字（例：MAB123456）</label></div>
+            <div class="rule-checkbox"><input type="checkbox" id="optFormatB" checked> <label><strong>格式B</strong> : 6位纯数字 (100001~999999) </label></div>
+            <div class="rule-checkbox"><input type="checkbox" id="optCustom"> <label>自定义正则：</label><input type="text" id="customRegexInput" placeholder="例如: \d{4}-[A-Z]{2}" style="width: 200px;" disabled></div>
+            <div class="rule-highlight" style="margin-top: 12px; background: #eef3fc; border-left-color:#198754; font-size:12px;">
+                ✅ 强制限定扫描列：仅遍历Excel工作表的 <strong>A列至N列 (第1~14列)</strong>，忽略N列后所有单元格，提高性能。
+            </div>
+        </div>
+
+        <!-- 结果面板 -->
+        <div id="resultSection" style="display: none;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; margin-top: 12px;">
+                <h3 style="margin:0">📊 比对结果 (状态分组 + 未找到优先)</h3>
+                <div>
+                    <button id="exportResultCsv" class="btn-outline">📎 导出CSV</button>
+                    <button id="resetAllBtn" class="btn-outline">🔄 重置全部</button>
+                </div>
+            </div>
+            <div class="stats" id="statSummary"></div>
+            <div class="preview-grid" id="resultTableView"></div>
+        </div>
+
+        <div class="footer">
+            🔧 使用说明：① 点击「加载数据库」获取远程编码库 ② 上传柜体表Excel ③ 开始提取比对（自动限定A~N列）<br>
+            📌 结果优化：自动将相同「软件状态」的编码合并显示，<strong class="status-notfound" style="background:#ffe0db;">「未找到」</strong>状态的条目排在最前。
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- 远程数据库地址 ----------
+        const REMOTE_CSV_URL = "https://raw.githubusercontent.com/Hu3430/BCGCYWB-ZY/main/coded%20database.csv";
+        
+        // DOM 元素
+        const manualLoadBtn = document.getElementById('manualLoadDbBtn');
+        const clearDbBtn = document.getElementById('clearDbMemoryBtn');
+        const dbInfoArea = document.getElementById('dbInfoArea');
+        const dbCountDisplay = document.getElementById('dbCountDisplay');
+        const dbVersionLabel = document.getElementById('dbVersionLabel');
+        const lastSyncInfoSpan = document.getElementById('lastSyncInfo');
+        const liveVersionBadge = document.getElementById('liveVersionBadge');
+        
+        const uploadArea = document.getElementById('extractUploadArea');
+        const fileInput = document.getElementById('extractFileInput');
+        const fileListPanel = document.getElementById('fileListPanel');
+        const fileTagsContainer = document.getElementById('fileTagsContainer');
+        const clearFilesBtn = document.getElementById('clearFilesBtn');
+        const processExtractBtn = document.getElementById('processExtractBtn');
+        const processMsg = document.getElementById('processMsg');
+        
+        const optFormatA = document.getElementById('optFormatA');
+        const optFormatB = document.getElementById('optFormatB');
+        const optCustom = document.getElementById('optCustom');
+        const customRegexInput = document.getElementById('customRegexInput');
+        
+        const resultSection = document.getElementById('resultSection');
+        const statSummary = document.getElementById('statSummary');
+        const resultTableView = document.getElementById('resultTableView');
+        const exportResultCsv = document.getElementById('exportResultCsv');
+        const resetAllBtn = document.getElementById('resetAllBtn');
+        
+        // ---------- 数据状态 ----------
+        let databaseMap = new Map();          // 编码 -> { status, codeStatus }
+        let dbLoaded = false;
+        let currentVersionLabel = "未加载";
+        let selectedFiles = [];               
+        let rawMatchResults = [];             
+        let groupedResults = [];              // 存储分组后的数据 { statusGroup, items: [] }
+        
+        // ---------- 辅助函数 ----------
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function updateDbUI(message, type, count = 0, version = "") {
+            dbInfoArea.innerHTML = message;
+            dbInfoArea.className = `db-${type}`;
+            dbCountDisplay.innerText = count;
+            if (version) {
+                currentVersionLabel = version;
+                dbVersionLabel.innerText = version;
+                let shortVer = version.length > 28 ? version.substring(0, 25) + "..." : version;
+                liveVersionBadge.innerHTML = `📀 ${escapeHtml(shortVer)}`;
+            } else {
+                dbVersionLabel.innerText = version || "-";
+                if (!dbLoaded) liveVersionBadge.innerHTML = "⚙️ 数据库未加载";
+            }
+        }
+        
+        // 解析CSV文本 (SheetJS)
+        async function parseRemoteCSV(csvText) {
+            const workbook = XLSX.read(csvText, { type: 'string', raw: true });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+            if (!rows || rows.length < 2) throw new Error("CSV 数据不足");
+            
+            let startRow = 0;
+            let versionMarker = "CSV_DB";
+            if (rows[0] && rows[0][0] && String(rows[0][0]).trim().startsWith("DB_VERSION:")) {
+                versionMarker = String(rows[0][0]).trim();
+                startRow = 1;
+            } else {
+                versionMarker = `manual_${new Date().toISOString().slice(0,19)}`;
+            }
+            
+            const newMap = new Map();
+            for (let i = startRow; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+                const code = (row[0] !== undefined && row[0] !== null) ? String(row[0]).trim() : "";
+                if (code === "") continue;
+                const status = (row[1] !== undefined && row[1] !== null) ? String(row[1]).trim() : "未知状态";
+                const codeStatus = (row[2] !== undefined && row[2] !== null) ? String(row[2]).trim() : "";
+                newMap.set(code, { status, codeStatus });
+            }
+            if (newMap.size === 0) throw new Error("未发现有效编码数据（A列为空）");
+            return { map: newMap, version: versionMarker, total: newMap.size };
+        }
+        
+        async function loadRemoteDatabaseManually() {
+            updateDbUI("⏳ 正在连接 GitHub 并拉取数据库，请稍候...", "warning", databaseMap.size, currentVersionLabel);
+            try {
+                const response = await fetch(REMOTE_CSV_URL, { cache: "no-cache" });
+                if (!response.ok) throw new Error(`HTTP ${response.status} — 无法获取CSV文件`);
+                const csvText = await response.text();
+                const { map, version, total } = await parseRemoteCSV(csvText);
+                databaseMap = map;
+                currentVersionLabel = version;
+                dbLoaded = true;
+                updateDbUI(`✅ 数据库加载成功！版本: ${escapeHtml(version)} ，共 ${total} 条编码记录。`, "info", total, version);
+                lastSyncInfoSpan.innerHTML = `🕒 最后加载: ${new Date().toLocaleTimeString()}`;
+                resultSection.style.display = "none";
+                rawMatchResults = [];
+                groupedResults = [];
+                return true;
+            } catch (err) {
+                console.error(err);
+                updateDbUI(`❌ 加载失败: ${err.message}。请检查网络或仓库地址。`, "error", databaseMap.size, currentVersionLabel);
+                dbLoaded = false;
+                databaseMap.clear();
+                return false;
+            }
+        }
+        
+        function clearDatabaseMemory() {
+            databaseMap.clear();
+            dbLoaded = false;
+            currentVersionLabel = "未加载";
+            updateDbUI("🗑️ 数据库已清空。如需使用请重新点击「加载数据库」。", "empty", 0, "");
+            lastSyncInfoSpan.innerHTML = "";
+            resultSection.style.display = "none";
+            rawMatchResults = [];
+            groupedResults = [];
+        }
+        
+        // ---------- 提取逻辑 (限定A~N列) ----------
+        function getFormatARegex() { return /M[A-Z]{2}\d{6}/g; }
+        function matchFormatBNumber(text) {
+            const regex = /\b([1-9]\d{5})\b/g;
+            const matches = [];
+            let m;
+            while ((m = regex.exec(text)) !== null) {
+                const num = parseInt(m[1], 10);
+                if (num >= 100001 && num <= 999999) matches.push(m[1]);
+            }
+            return matches;
+        }
+        
+        function getActivePatterns() {
+            const patterns = [];
+            if (optFormatA.checked) patterns.push({ regex: getFormatARegex(), name: 'A' });
+            if (optFormatB.checked) patterns.push({ customMatch: matchFormatBNumber, name: 'B' });
+            if (optCustom.checked && customRegexInput.value.trim()) {
+                try {
+                    const customReg = new RegExp(customRegexInput.value.trim(), 'g');
+                    patterns.push({ regex: customReg, name: 'custom' });
+                } catch(e) { console.warn("自定义正则无效"); }
+            }
+            return patterns;
+        }
+        
+        function extractMatchesFromCell(cellText, patterns) {
+            if (!cellText || typeof cellText !== 'string') return [];
+            const results = [], seen = new Set();
+            for (const p of patterns) {
+                if (p.customMatch) {
+                    const arr = p.customMatch(cellText);
+                    for (const val of arr) {
+                        if (!seen.has(val)) { seen.add(val); results.push(val); }
+                    }
+                } else if (p.regex) {
+                    p.regex.lastIndex = 0;
+                    let match;
+                    while ((match = p.regex.exec(cellText)) !== null) {
+                        if (match[0] && !seen.has(match[0])) { seen.add(match[0]); results.push(match[0]); }
+                    }
+                }
+            }
+            return results;
+        }
+        
+        async function extractFromExcelFile(file, patterns) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+                        const uniqueCodes = new Set();
+                        if (!rows || rows.length === 0) return resolve([]);
+                        const MAX_COL = 13; // N列索引13
+                        for (let r = 0; r < rows.length; r++) {
+                            const row = rows[r];
+                            if (!row) continue;
+                            const limit = Math.min(row.length, MAX_COL + 1);
+                            for (let c = 0; c < limit; c++) {
+                                const cellVal = row[c];
+                                const strVal = String(cellVal === undefined || cellVal === null ? "" : cellVal);
+                                if (strVal.trim()) {
+                                    const matches = extractMatchesFromCell(strVal, patterns);
+                                    for (let code of matches) uniqueCodes.add(code);
+                                }
+                            }
+                        }
+                        resolve(Array.from(uniqueCodes));
+                    } catch(err) { reject(err); }
+                };
+                reader.onerror = () => reject(new Error("文件读取失败"));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+        
+        // ---------- 核心：状态分组 + 未找到优先排序 ----------
+        function buildGroupedResultsFromRaw() {
+            // 先合并原始数据（按编码去重，但保留所有来源文件）
+            const codeAgg = new Map();
+            for (const item of rawMatchResults) {
+                if (!codeAgg.has(item.extractedCode)) {
+                    codeAgg.set(item.extractedCode, {
+                        files: new Set(),
+                        status: item.status,
+                        codeStatus: item.codeStatus
+                    });
+                }
+                codeAgg.get(item.extractedCode).files.add(item.fileName);
+            }
+            // 构建中间数组
+            const itemsArray = [];
+            for (const [code, data] of codeAgg.entries()) {
+                itemsArray.push({
+                    code: code,
+                    fileNames: Array.from(data.files).join("；"),
+                    status: data.status,
+                    codeStatus: data.codeStatus
+                });
+            }
+            // 按 status 分组
+            const groupsMap = new Map(); // key: status, value: items数组
+            for (const item of itemsArray) {
+                const statusKey = item.status;
+                if (!groupsMap.has(statusKey)) groupsMap.set(statusKey, []);
+                groupsMap.get(statusKey).push(item);
+            }
+            // 对每个分组内的编码进行排序 (字母数字顺序)
+            for (let [_, itemList] of groupsMap.entries()) {
+                itemList.sort((a, b) => a.code.localeCompare(b.code));
+            }
+            // 构建分组数组，并确保「未找到」分组排在最前面
+            const groupEntries = Array.from(groupsMap.entries());
+            // 自定义排序: "未找到" 排第一，其他的按状态名称排序
+            groupEntries.sort((a, b) => {
+                if (a[0] === "未找到") return -1;
+                if (b[0] === "未找到") return 1;
+                return a[0].localeCompare(b[0]);
+            });
+            groupedResults = groupEntries.map(([status, items]) => ({ statusGroup: status, items }));
+        }
+        
+        // 渲染分组表格（带组头，未找到组优先）
+        function renderGroupedResults() {
+            const foundTotal = groupedResults.reduce((sum, group) => {
+                if (group.statusGroup !== "未找到") return sum + group.items.length;
+                return sum;
+            }, 0);
+            const notFoundTotal = groupedResults.find(g => g.statusGroup === "未找到")?.items.length || 0;
+            const uniqueTotal = groupedResults.reduce((sum, g) => sum + g.items.length, 0);
+            
+            statSummary.innerHTML = `
+                <div class="stat">📊 唯一编码数: <span>${uniqueTotal}</span></div>
+                <div class="stat">✅ 数据库中存在: <span style="color:#198754;">${foundTotal}</span></div>
+                <div class="stat">❌ 未找到: <span style="color:#dc3545;">${notFoundTotal}</span></div>
+                <div class="stat">🔎 扫描列: <span style="color:#0d6efd;">A~N列</span></div>
+                <div class="stat">🏷️ 状态分组: <span>${groupedResults.length} 个状态组</span></div>
+            `;
+            
+            let html = `<table><thead>
+                <tr>
+                    <th style="width:20%">提取的编码</th>
+                    <th style="width:45%">来源文件名</th>
+                    <th style="width:18%">软件状态</th>
+                    <th style="width:17%">编码状态</th>
+                </tr>
+            </thead><tbody>`;
+            
+            for (let groupIdx = 0; groupIdx < groupedResults.length; groupIdx++) {
+                const group = groupedResults[groupIdx];
+                const isNotFound = (group.statusGroup === "未找到");
+                // 组标题行 (突出显示)
+                const groupLabel = isNotFound ? `❌ 状态组: ${escapeHtml(group.statusGroup)} (优先展示)` : `📌 状态组: ${escapeHtml(group.statusGroup)}`;
+                const bgColor = isNotFound ? "#fff2ef" : "#f8fafc";
+                html += `<tr class="group-header-row" style="background-color: ${bgColor};">
+                    <td colspan="4" style="background-color: ${bgColor}; padding: 8px 12px; font-weight: 700; border-bottom: 2px solid #dce5f0;">
+                        ${groupLabel} &nbsp; <span style="font-weight:normal; font-size:12px;">（共 ${group.items.length} 个编码）</span>
+                    </td>
+                </tr>`;
+                
+                // 渲染该组下所有编码
+                for (const item of group.items) {
+                    const statusHtml = item.status === "未找到" 
+                        ? '<span class="status-notfound">❌ 未找到</span>' 
+                        : `<span class="status-found">✅ ${escapeHtml(item.status)}</span>`;
+                    const codeStatusHtml = item.codeStatus 
+                        ? `<span class="status-found">📌 ${escapeHtml(item.codeStatus)}</span>` 
+                        : '<span style="color:#8a99b0;">—</span>';
+                    html += `<tr>
+                        <td><code style="font-weight:bold;">${escapeHtml(item.code)}</code></td>
+                        <td style="max-width:280px; word-break:break-word;">${escapeHtml(item.fileNames)}</td>
+                        <td>${statusHtml}</td>
+                        <td>${codeStatusHtml}</td>
+                    </tr>`;
+                }
+            }
+            html += `</tbody>树</table>`;
+            resultTableView.innerHTML = html;
+        }
+        
+        async function processAllUploadedFiles() {
+            if (!dbLoaded || databaseMap.size === 0) {
+                alert("数据库未加载或为空，请先点击「加载数据库」按钮获取编码库");
+                return;
+            }
+            if (selectedFiles.length === 0) {
+                alert("请先上传柜体表文件");
+                return;
+            }
+            const patterns = getActivePatterns();
+            if (patterns.length === 0) {
+                alert("请至少勾选一种编码匹配格式");
+                return;
+            }
+            processExtractBtn.disabled = true;
+            processMsg.innerText = "⏳ 正在提取编码 (限定扫描A~N列)...";
+            rawMatchResults = [];
+            
+            for (const file of selectedFiles) {
+                try {
+                    const codes = await extractFromExcelFile(file, patterns);
+                    for (const code of codes) {
+                        const dbInfo = databaseMap.get(code);
+                        rawMatchResults.push({
+                            fileName: file.name,
+                            extractedCode: code,
+                            status: dbInfo ? dbInfo.status : "未找到",
+                            codeStatus: dbInfo ? dbInfo.codeStatus : ""
+                        });
+                    }
+                    processMsg.innerText = `📌 已处理 ${rawMatchResults.length} 条匹配记录`;
+                } catch(err) {
+                    alert(`处理文件 ${file.name} 出错：${err.message}`);
+                }
+            }
+            
+            // 构建分组结果（状态分组+未找到优先）
+            buildGroupedResultsFromRaw();
+            
+            if (groupedResults.length === 0 || groupedResults.every(g => g.items.length === 0)) {
+                alert("未提取到任何匹配编码 (扫描范围A~N列)");
+                processExtractBtn.disabled = false;
+                processMsg.innerText = "";
+                return;
+            }
+            
+            renderGroupedResults();
+            resultSection.style.display = "block";
+            processExtractBtn.disabled = false;
+            processMsg.innerText = `✅ 完成！共提取 ${rawMatchResults.length} 条匹配，合并后唯一编码 ${groupedResults.reduce((acc,g)=>acc+g.items.length,0)} 个，已按「软件状态」分组，「未找到」优先展示。`;
+            setTimeout(() => { if(processMsg.innerText.includes("完成")) processMsg.innerText = ""; }, 4500);
+        }
+        
+        function exportToCSV() {
+            if (groupedResults.length === 0 || groupedResults.every(g => g.items.length === 0)) { 
+                alert("无数据可导出"); 
+                return; 
+            }
+            const headers = ["状态分组", "提取的编码", "来源文件名", "数据库状态", "编码状态", "扫描范围"];
+            const rows = [];
+            for (const group of groupedResults) {
+                for (const item of group.items) {
+                    rows.push([group.statusGroup, item.code, item.fileNames, item.status, item.codeStatus, "A~N列"]);
+                }
+            }
+            const csvContent = [headers, ...rows].map(row => row.map(cell => {
+                let val = String(cell);
+                if (val.includes(",") || val.includes("\"") || val.includes("\n")) val = `"${val.replace(/"/g, '""')}"`;
+                return val;
+            }).join(",")).join("\n");
+            const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+            link.download = `柜体表编码_状态分组_${timestamp}.csv`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+        
+        // ---------- 文件UI管理 ----------
+        function updateFileTagsUI() {
+            if (selectedFiles.length === 0) {
+                fileListPanel.style.display = "none";
+                return;
+            }
+            fileListPanel.style.display = "flex";
+            let html = '';
+            selectedFiles.forEach((f, idx) => {
+                html += `<div class="file-tag">📄 ${escapeHtml(f.name)} (${(f.size/1024).toFixed(1)}KB)<span class="remove" data-idx="${idx}">✕</span></div>`;
+            });
+            fileTagsContainer.innerHTML = html;
+            document.querySelectorAll('.file-tag .remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.getAttribute('data-idx'));
+                    selectedFiles.splice(idx, 1);
+                    updateFileTagsUI();
+                    resultSection.style.display = "none";
+                });
+            });
+        }
+        
+        function handleFileSelection(files) {
+            const valid = Array.from(files).filter(f => f.name.match(/\.(xlsx|xls|csv)$/i));
+            if (valid.length === 0) { alert("请选择 .xlsx/.xls/.csv 文件"); return; }
+            selectedFiles.push(...valid);
+            updateFileTagsUI();
+            resultSection.style.display = "none";
+            processMsg.innerText = `已选 ${selectedFiles.length} 个文件 (扫描列A~N)`;
+        }
+        
+        function clearAllFiles() {
+            selectedFiles = [];
+            updateFileTagsUI();
+            resultSection.style.display = "none";
+            rawMatchResults = [];
+            groupedResults = [];
+            fileInput.value = "";
+        }
+        
+        function fullReset() {
+            clearAllFiles();
+            resultSection.style.display = "none";
+        }
+        
+        // ---------- 事件绑定 ----------
+        manualLoadBtn.addEventListener('click', () => loadRemoteDatabaseManually());
+        clearDbBtn.addEventListener('click', clearDatabaseMemory);
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', e => e.preventDefault());
+        uploadArea.addEventListener('drop', e => {
+            e.preventDefault();
+            handleFileSelection(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length) handleFileSelection(e.target.files);
+            fileInput.value = "";
+        });
+        clearFilesBtn.addEventListener('click', clearAllFiles);
+        processExtractBtn.addEventListener('click', processAllUploadedFiles);
+        exportResultCsv.addEventListener('click', exportToCSV);
+        resetAllBtn.addEventListener('click', fullReset);
+        optCustom.addEventListener('change', () => { customRegexInput.disabled = !optCustom.checked; if (!optCustom.checked) customRegexInput.value = ''; });
+        
+        // 初始化：手动模式，无自动加载
+        updateDbUI("⚠️ 数据库未加载，请点击「加载数据库」按钮开始。", "empty", 0, "");
+        lastSyncInfoSpan.innerHTML = "";
+    })();
+</script>
+</body>
+</html>
