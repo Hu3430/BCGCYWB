@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>柜体表编码提取工具 | 自动加载CSV数据库 | 列范围限定(A-N)</title>
+    <title>柜体表编码提取工具 | 手动加载数据库 | 状态聚合+未找到优先</title>
     <style>
         * {
             box-sizing: border-box;
@@ -21,7 +21,6 @@
             margin: 0 auto;
         }
 
-        /* 卡片样式 */
         .card {
             background: #ffffff;
             border-radius: 28px;
@@ -319,22 +318,6 @@
             font-size: 0.8rem;
         }
 
-        .spinner-mini {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid white;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 0.5s linear infinite;
-            margin-left: 6px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         hr {
             margin: 24px 0;
             border: none;
@@ -349,6 +332,18 @@
                 font-size: 1.5rem;
             }
         }
+        
+        .group-separator {
+            background: #f8f9fc;
+            font-weight: 600;
+        }
+        .group-header-row td {
+            background-color: #f1f5f9;
+            padding: 10px 12px;
+            font-weight: 600;
+            border-top: 2px solid #cbd5e1;
+            border-bottom: 2px solid #cbd5e1;
+        }
     </style>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -360,28 +355,27 @@
                 <h1>📄 柜体表编码提取工具</h1>
                 <div class="badge-limit">🔍 扫描范围: A列 → N列 (限定优化)</div>
             </div>
-            <div class="version-badge" id="liveVersionBadge">⚙️ 数据库待加载</div>
+            <div class="version-badge" id="liveVersionBadge">⚙️ 数据库未加载</div>
         </div>
-        <div class="sub">提取柜体表编码，自动比对 GitHub CSV 数据库 | 严格限定 Excel A~N列，高效精准</div>
+        <div class="sub">提取柜体表编码，手动加载 GitHub CSV 数据库 | 结果按「软件状态」分组，<strong style="color:#dc3545;">「未找到」优先展示</strong></div>
 
         <!-- 数据库远程位置简洁说明 -->
         <div class="db-path" style="background:#eef3fc; border-radius: 18px; padding: 10px 16px; font-size:12px; margin-bottom:16px;">
-            📡 数据源：<code id="remoteUrlDisplay">https://raw.githubusercontent.com/Hu3430/BCGCYWB-ZY/main/coded%20database.csv</code>
-            <span style="margin-left: 12px;">✨ 页面启动自动拉取最新编码库</span>
+            <span style="margin-left: 20px;">👉 需手动点击下方按钮加载数据库</span>
         </div>
 
         <!-- 数据库控制栏 -->
         <div class="flex-row">
             <div class="button-group">
-                <button id="manualReloadDbBtn" class="btn-purple">🔄 重新加载远程数据库</button>
-                <button id="clearLocalDbBtn" class="btn-danger">🗑️ 重置数据库状态</button>
+                <button id="manualLoadDbBtn" class="btn-purple">🗄️ 加载数据库 (GitHub CSV)</button>
+                <button id="clearDbMemoryBtn" class="btn-danger">🗑️ 清空数据库</button>
             </div>
             <div id="dbSyncNote" style="font-size: 12px; color: #1f6392;"></div>
         </div>
 
         <!-- 数据库状态展示区 -->
-        <div id="dbInfoArea" class="db-warning">
-            ⏳ 正在自动同步远程CSV数据库，请稍候...
+        <div id="dbInfoArea" class="db-empty">
+            ⚠️ 数据库未加载，请点击上方「加载数据库」按钮开始。
         </div>
 
         <!-- 数据库额外统计 -->
@@ -424,7 +418,7 @@
         <!-- 结果面板 -->
         <div id="resultSection" style="display: none;">
             <div style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; margin-top: 12px;">
-                <h3 style="margin:0">📊 比对结果 (唯一编码)</h3>
+                <h3 style="margin:0">📊 比对结果 (状态分组 + 未找到优先)</h3>
                 <div>
                     <button id="exportResultCsv" class="btn-outline">📎 导出CSV</button>
                     <button id="resetAllBtn" class="btn-outline">🔄 重置全部</button>
@@ -435,8 +429,8 @@
         </div>
 
         <div class="footer">
-            🔧 技术说明：数据库源为GitHub仓库中的 coded database.csv（需包含A列编码，B列状态，C列编码状态）<br>
-            🚀 每次页面加载自动获取最新数据，比对提取编码状态，支持导出合并结果。列范围强制A~N避免无关干扰。
+            🔧 使用说明：① 点击「加载数据库」获取远程编码库 ② 上传柜体表Excel ③ 开始提取比对（自动限定A~N列）<br>
+            📌 结果优化：自动将相同「软件状态」的编码合并显示，<strong class="status-notfound" style="background:#ffe0db;">「未找到」</strong>状态的条目排在最前。
         </div>
     </div>
 </div>
@@ -447,8 +441,8 @@
         const REMOTE_CSV_URL = "https://raw.githubusercontent.com/Hu3430/BCGCYWB-ZY/main/coded%20database.csv";
         
         // DOM 元素
-        const manualReloadBtn = document.getElementById('manualReloadDbBtn');
-        const clearDbBtn = document.getElementById('clearLocalDbBtn');
+        const manualLoadBtn = document.getElementById('manualLoadDbBtn');
+        const clearDbBtn = document.getElementById('clearDbMemoryBtn');
         const dbInfoArea = document.getElementById('dbInfoArea');
         const dbCountDisplay = document.getElementById('dbCountDisplay');
         const dbVersionLabel = document.getElementById('dbVersionLabel');
@@ -478,9 +472,9 @@
         let databaseMap = new Map();          // 编码 -> { status, codeStatus }
         let dbLoaded = false;
         let currentVersionLabel = "未加载";
-        let selectedFiles = [];               // 存储 File 对象
-        let rawMatchResults = [];             // 原始匹配 { fileName, extractedCode, status, codeStatus }
-        let mergedUniqueResults = [];          // 合并去重后的结果
+        let selectedFiles = [];               
+        let rawMatchResults = [];             
+        let groupedResults = [];              // 存储分组后的数据 { statusGroup, items: [] }
         
         // ---------- 辅助函数 ----------
         function escapeHtml(str) {
@@ -493,15 +487,18 @@
             });
         }
         
-        // 更新UI数据库状态
         function updateDbUI(message, type, count = 0, version = "") {
             dbInfoArea.innerHTML = message;
-            dbInfoArea.className = `db-${type}`; // info, error, warning, empty
-            if (count !== undefined) dbCountDisplay.innerText = count;
+            dbInfoArea.className = `db-${type}`;
+            dbCountDisplay.innerText = count;
             if (version) {
                 currentVersionLabel = version;
                 dbVersionLabel.innerText = version;
-                liveVersionBadge.innerHTML = `📀 ${escapeHtml(version.substring(0, 28))}`;
+                let shortVer = version.length > 28 ? version.substring(0, 25) + "..." : version;
+                liveVersionBadge.innerHTML = `📀 ${escapeHtml(shortVer)}`;
+            } else {
+                dbVersionLabel.innerText = version || "-";
+                if (!dbLoaded) liveVersionBadge.innerHTML = "⚙️ 数据库未加载";
             }
         }
         
@@ -512,14 +509,13 @@
             const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
             if (!rows || rows.length < 2) throw new Error("CSV 数据不足");
             
-            // 检测版本行（第一行第一格是否包含 DB_VERSION）
             let startRow = 0;
             let versionMarker = "CSV_DB";
             if (rows[0] && rows[0][0] && String(rows[0][0]).trim().startsWith("DB_VERSION:")) {
                 versionMarker = String(rows[0][0]).trim();
                 startRow = 1;
             } else {
-                versionMarker = `online_${new Date().toISOString().slice(0,19)}`;
+                versionMarker = `manual_${new Date().toISOString().slice(0,19)}`;
             }
             
             const newMap = new Map();
@@ -536,11 +532,8 @@
             return { map: newMap, version: versionMarker, total: newMap.size };
         }
         
-        // 从远程加载数据库 (强制)
-        async function loadRemoteDatabase(showLoadingMsg = true) {
-            if (showLoadingMsg) {
-                updateDbUI("🌐 正在连接 GitHub 并拉取最新数据库...", "warning", databaseMap.size, currentVersionLabel);
-            }
+        async function loadRemoteDatabaseManually() {
+            updateDbUI("⏳ 正在连接 GitHub 并拉取数据库，请稍候...", "warning", databaseMap.size, currentVersionLabel);
             try {
                 const response = await fetch(REMOTE_CSV_URL, { cache: "no-cache" });
                 if (!response.ok) throw new Error(`HTTP ${response.status} — 无法获取CSV文件`);
@@ -550,26 +543,29 @@
                 currentVersionLabel = version;
                 dbLoaded = true;
                 updateDbUI(`✅ 数据库加载成功！版本: ${escapeHtml(version)} ，共 ${total} 条编码记录。`, "info", total, version);
-                lastSyncInfoSpan.innerHTML = `🕒 最后同步: ${new Date().toLocaleTimeString()}`;
-                // 清除之前结果（数据库变更后之前比对失效）
+                lastSyncInfoSpan.innerHTML = `🕒 最后加载: ${new Date().toLocaleTimeString()}`;
                 resultSection.style.display = "none";
                 rawMatchResults = [];
-                mergedUniqueResults = [];
+                groupedResults = [];
                 return true;
             } catch (err) {
                 console.error(err);
-                updateDbUI(`❌ 加载失败: ${err.message}。请检查网络或仓库地址，稍后点击「重新加载」。`, "error", databaseMap.size, currentVersionLabel);
+                updateDbUI(`❌ 加载失败: ${err.message}。请检查网络或仓库地址。`, "error", databaseMap.size, currentVersionLabel);
                 dbLoaded = false;
                 databaseMap.clear();
                 return false;
             }
         }
         
-        // 重置数据库状态(清除内存并重新加载)
-        async function resetAndReload() {
+        function clearDatabaseMemory() {
             databaseMap.clear();
             dbLoaded = false;
-            await loadRemoteDatabase(true);
+            currentVersionLabel = "未加载";
+            updateDbUI("🗑️ 数据库已清空。如需使用请重新点击「加载数据库」。", "empty", 0, "");
+            lastSyncInfoSpan.innerHTML = "";
+            resultSection.style.display = "none";
+            rawMatchResults = [];
+            groupedResults = [];
         }
         
         // ---------- 提取逻辑 (限定A~N列) ----------
@@ -629,7 +625,7 @@
                         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
                         const uniqueCodes = new Set();
                         if (!rows || rows.length === 0) return resolve([]);
-                        const MAX_COL = 13; // N列索引13 (0-based)
+                        const MAX_COL = 13; // N列索引13
                         for (let r = 0; r < rows.length; r++) {
                             const row = rows[r];
                             if (!row) continue;
@@ -651,10 +647,113 @@
             });
         }
         
-        // 批量处理所有文件，进行比对
+        // ---------- 核心：状态分组 + 未找到优先排序 ----------
+        function buildGroupedResultsFromRaw() {
+            // 先合并原始数据（按编码去重，但保留所有来源文件）
+            const codeAgg = new Map();
+            for (const item of rawMatchResults) {
+                if (!codeAgg.has(item.extractedCode)) {
+                    codeAgg.set(item.extractedCode, {
+                        files: new Set(),
+                        status: item.status,
+                        codeStatus: item.codeStatus
+                    });
+                }
+                codeAgg.get(item.extractedCode).files.add(item.fileName);
+            }
+            // 构建中间数组
+            const itemsArray = [];
+            for (const [code, data] of codeAgg.entries()) {
+                itemsArray.push({
+                    code: code,
+                    fileNames: Array.from(data.files).join("；"),
+                    status: data.status,
+                    codeStatus: data.codeStatus
+                });
+            }
+            // 按 status 分组
+            const groupsMap = new Map(); // key: status, value: items数组
+            for (const item of itemsArray) {
+                const statusKey = item.status;
+                if (!groupsMap.has(statusKey)) groupsMap.set(statusKey, []);
+                groupsMap.get(statusKey).push(item);
+            }
+            // 对每个分组内的编码进行排序 (字母数字顺序)
+            for (let [_, itemList] of groupsMap.entries()) {
+                itemList.sort((a, b) => a.code.localeCompare(b.code));
+            }
+            // 构建分组数组，并确保「未找到」分组排在最前面
+            const groupEntries = Array.from(groupsMap.entries());
+            // 自定义排序: "未找到" 排第一，其他的按状态名称排序
+            groupEntries.sort((a, b) => {
+                if (a[0] === "未找到") return -1;
+                if (b[0] === "未找到") return 1;
+                return a[0].localeCompare(b[0]);
+            });
+            groupedResults = groupEntries.map(([status, items]) => ({ statusGroup: status, items }));
+        }
+        
+        // 渲染分组表格（带组头，未找到组优先）
+        function renderGroupedResults() {
+            const foundTotal = groupedResults.reduce((sum, group) => {
+                if (group.statusGroup !== "未找到") return sum + group.items.length;
+                return sum;
+            }, 0);
+            const notFoundTotal = groupedResults.find(g => g.statusGroup === "未找到")?.items.length || 0;
+            const uniqueTotal = groupedResults.reduce((sum, g) => sum + g.items.length, 0);
+            
+            statSummary.innerHTML = `
+                <div class="stat">📊 唯一编码数: <span>${uniqueTotal}</span></div>
+                <div class="stat">✅ 数据库中存在: <span style="color:#198754;">${foundTotal}</span></div>
+                <div class="stat">❌ 未找到: <span style="color:#dc3545;">${notFoundTotal}</span></div>
+                <div class="stat">🔎 扫描列: <span style="color:#0d6efd;">A~N列</span></div>
+                <div class="stat">🏷️ 状态分组: <span>${groupedResults.length} 个状态组</span></div>
+            `;
+            
+            let html = `<table><thead>
+                <tr>
+                    <th style="width:20%">提取的编码</th>
+                    <th style="width:45%">来源文件名</th>
+                    <th style="width:18%">软件状态</th>
+                    <th style="width:17%">编码状态</th>
+                </tr>
+            </thead><tbody>`;
+            
+            for (let groupIdx = 0; groupIdx < groupedResults.length; groupIdx++) {
+                const group = groupedResults[groupIdx];
+                const isNotFound = (group.statusGroup === "未找到");
+                // 组标题行 (突出显示)
+                const groupLabel = isNotFound ? `❌ 状态组: ${escapeHtml(group.statusGroup)} (优先展示)` : `📌 状态组: ${escapeHtml(group.statusGroup)}`;
+                const bgColor = isNotFound ? "#fff2ef" : "#f8fafc";
+                html += `<tr class="group-header-row" style="background-color: ${bgColor};">
+                    <td colspan="4" style="background-color: ${bgColor}; padding: 8px 12px; font-weight: 700; border-bottom: 2px solid #dce5f0;">
+                        ${groupLabel} &nbsp; <span style="font-weight:normal; font-size:12px;">（共 ${group.items.length} 个编码）</span>
+                    </td>
+                </tr>`;
+                
+                // 渲染该组下所有编码
+                for (const item of group.items) {
+                    const statusHtml = item.status === "未找到" 
+                        ? '<span class="status-notfound">❌ 未找到</span>' 
+                        : `<span class="status-found">✅ ${escapeHtml(item.status)}</span>`;
+                    const codeStatusHtml = item.codeStatus 
+                        ? `<span class="status-found">📌 ${escapeHtml(item.codeStatus)}</span>` 
+                        : '<span style="color:#8a99b0;">—</span>';
+                    html += `<tr>
+                        <td><code style="font-weight:bold;">${escapeHtml(item.code)}</code></td>
+                        <td style="max-width:280px; word-break:break-word;">${escapeHtml(item.fileNames)}</td>
+                        <td>${statusHtml}</td>
+                        <td>${codeStatusHtml}</td>
+                    </tr>`;
+                }
+            }
+            html += `</tbody>树</table>`;
+            resultTableView.innerHTML = html;
+        }
+        
         async function processAllUploadedFiles() {
             if (!dbLoaded || databaseMap.size === 0) {
-                alert("数据库未加载或为空，请稍后或点击「重新加载远程数据库」");
+                alert("数据库未加载或为空，请先点击「加载数据库」按钮获取编码库");
                 return;
             }
             if (selectedFiles.length === 0) {
@@ -667,7 +766,7 @@
                 return;
             }
             processExtractBtn.disabled = true;
-            processMsg.innerText = "⏳ 提取中 (限定扫描A~N列)...";
+            processMsg.innerText = "⏳ 正在提取编码 (限定扫描A~N列)...";
             rawMatchResults = [];
             
             for (const file of selectedFiles) {
@@ -687,65 +786,36 @@
                     alert(`处理文件 ${file.name} 出错：${err.message}`);
                 }
             }
-            // 合并结果
-            const codeAgg = new Map();
-            for (const item of rawMatchResults) {
-                if (!codeAgg.has(item.extractedCode)) {
-                    codeAgg.set(item.extractedCode, {
-                        files: new Set(),
-                        status: item.status,
-                        codeStatus: item.codeStatus
-                    });
-                }
-                codeAgg.get(item.extractedCode).files.add(item.fileName);
-            }
-            mergedUniqueResults = [];
-            for (const [code, data] of codeAgg.entries()) {
-                mergedUniqueResults.push({
-                    code: code,
-                    fileNames: Array.from(data.files).join("；"),
-                    status: data.status,
-                    codeStatus: data.codeStatus
-                });
-            }
-            mergedUniqueResults.sort((a,b) => a.code.localeCompare(b.code));
             
-            // 渲染
-            renderResultsTable();
+            // 构建分组结果（状态分组+未找到优先）
+            buildGroupedResultsFromRaw();
+            
+            if (groupedResults.length === 0 || groupedResults.every(g => g.items.length === 0)) {
+                alert("未提取到任何匹配编码 (扫描范围A~N列)");
+                processExtractBtn.disabled = false;
+                processMsg.innerText = "";
+                return;
+            }
+            
+            renderGroupedResults();
             resultSection.style.display = "block";
             processExtractBtn.disabled = false;
-            processMsg.innerText = `✅ 完成！提取到 ${rawMatchResults.length} 条匹配，合并后 ${mergedUniqueResults.length} 个唯一编码 (范围A~N)`;
-            setTimeout(() => { if(processMsg.innerText.includes("完成")) processMsg.innerText = ""; }, 3500);
-        }
-        
-        function renderResultsTable() {
-            const foundCount = mergedUniqueResults.filter(r => r.status !== "未找到").length;
-            const notFound = mergedUniqueResults.length - foundCount;
-            statSummary.innerHTML = `
-                <div class="stat">📊 唯一编码数: <span>${mergedUniqueResults.length}</span></div>
-                <div class="stat">✅ 数据库中存在: <span style="color:#198754;">${foundCount}</span></div>
-                <div class="stat">❌ 未找到: <span style="color:#dc3545;">${notFound}</span></div>
-                <div class="stat">🔎 扫描列: <span style="color:#0d6efd;">A~N列</span></div>
-            `;
-            let html = `<table><thead><tr><th>编码</th><th>来源文件</th><th>软件状态</th><th>编码状态</th></tr></thead><tbody>`;
-            for (const item of mergedUniqueResults) {
-                const statusHtml = item.status === "未找到" ? '<span class="status-notfound">❌ 未找到</span>' : `<span class="status-found">✅ ${escapeHtml(item.status)}</span>`;
-                const codeStatusHtml = item.codeStatus ? `<span class="status-found">📌 ${escapeHtml(item.codeStatus)}</span>` : '<span style="color:#8a99b0;">—</span>';
-                html += `<tr>
-                    <td><code style="font-weight:bold;">${escapeHtml(item.code)}</code></td>
-                    <td style="max-width:280px; word-break:break-word;">${escapeHtml(item.fileNames)}</td>
-                    <td>${statusHtml}</td>
-                    <td>${codeStatusHtml}</td>
-                </tr>`;
-            }
-            html += `</tbody></table>`;
-            resultTableView.innerHTML = html;
+            processMsg.innerText = `✅ 完成！共提取 ${rawMatchResults.length} 条匹配，合并后唯一编码 ${groupedResults.reduce((acc,g)=>acc+g.items.length,0)} 个，已按「软件状态」分组，「未找到」优先展示。`;
+            setTimeout(() => { if(processMsg.innerText.includes("完成")) processMsg.innerText = ""; }, 4500);
         }
         
         function exportToCSV() {
-            if (mergedUniqueResults.length === 0) { alert("无数据可导出"); return; }
-            const headers = ["提取的编码","来源文件名","数据库状态","编码状态","扫描范围"];
-            const rows = mergedUniqueResults.map(item => [item.code, item.fileNames, item.status, item.codeStatus, "A~N列"]);
+            if (groupedResults.length === 0 || groupedResults.every(g => g.items.length === 0)) { 
+                alert("无数据可导出"); 
+                return; 
+            }
+            const headers = ["状态分组", "提取的编码", "来源文件名", "数据库状态", "编码状态", "扫描范围"];
+            const rows = [];
+            for (const group of groupedResults) {
+                for (const item of group.items) {
+                    rows.push([group.statusGroup, item.code, item.fileNames, item.status, item.codeStatus, "A~N列"]);
+                }
+            }
             const csvContent = [headers, ...rows].map(row => row.map(cell => {
                 let val = String(cell);
                 if (val.includes(",") || val.includes("\"") || val.includes("\n")) val = `"${val.replace(/"/g, '""')}"`;
@@ -754,7 +824,7 @@
             const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
             const link = document.createElement("a");
             const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
-            link.download = `柜体表编码_A-N限定_${timestamp}.csv`;
+            link.download = `柜体表编码_状态分组_${timestamp}.csv`;
             link.href = URL.createObjectURL(blob);
             link.click();
             URL.revokeObjectURL(link.href);
@@ -764,14 +834,14 @@
         function updateFileTagsUI() {
             if (selectedFiles.length === 0) {
                 fileListPanel.style.display = "none";
-                return;
+                return   < !DOCTYPE html   超文本标记语言>   返回;
             }
             fileListPanel.style.display = "flex";
             let html = '';
             selectedFiles.forEach((f, idx) => {
                 html += `<div class="file-tag">📄 ${escapeHtml(f.name)} (${(f.size/1024).toFixed(1)}KB)<span class="remove" data-idx="${idx}">✕</span></div>`;
-            }   < !DOCTYPE    文档类型html>);
-            fileTagsContainer.innerHTML = html   超文本标记语言;
+            });
+            fileTagsContainer.innerHTML = html;
             document.querySelectorAll('.file-tag .remove').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const idx = parseInt(btn.getAttribute('data-idx'));
@@ -782,60 +852,51 @@
             });
         }
         
-        function handleFileSelection(files) {
-            const valid = Array.from(files).filter(f => f.name.match(/\.(xlsx|xls|csv)$/i));
-            if (valid.length === 0) { alert("请选择 .xlsx/.xls/.csv 文件"); return; }
-            selectedFiles.push(...valid);
+        function handleFileSelection(files) {函数handleFileSelection（文件）{
+            const valid = Array.from(files).filter(f => f.name.match(/\.(xlsx|xls|csv)$/i));const   常量   有效的 valid      有效的有效的 = Array   数组.from   从(files   文件).filter   过滤器(f => f.name   名字.match(/\.(xlsx|xls|csv)$/i))；
+            if (valid.length === 0) { alert("请选择 .xlsx/.xls/.csv 文件"); return; }if   如果 (valid   有效的.length   长度 === 0) { alert      警报警报("请选择 .xlsx/.xls/.csv 文件"); return   返回; }
+            selectedFiles.push(...valid);selectedFiles.push   推(…有效);
             updateFileTagsUI();
-            resultSection.style.display = "none";
+            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none";
             processMsg.innerText = `已选 ${selectedFiles.length} 个文件 (扫描列A~N)`;
         }
         
-        function clearAllFiles() {
-            selectedFiles = [];
+        function clearAllFiles() {   函数clearAllFiles() {
+            selectedFiles = [];   selectedFiles = []；
             updateFileTagsUI();
-            resultSection.style.display = "none";
-            rawMatchResults = [];
-            mergedUniqueResults = [];
-            fileInput.value = "";
+            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none";
+            rawMatchResults = [];   rawMatchResults = []；
+            groupedResults = [];
+            fileInput.value = "";   fileInput.value   价值 = ""   ""   ""   ""   ""   "";
         }
         
-        function fullReset() {
+        function fullReset() {   函数fullReset() {
             clearAllFiles();
-            resultSection.style.display = "none";
+            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none";
         }
         
-        // 事件绑定
-        manualReloadBtn.addEventListener('click', () => resetAndReload());
-        clearDbBtn.addEventListener('click', async () => {
-            databaseMap.clear();
-            dbLoaded = false;
-            updateDbUI("🗑️ 已清空数据库内存，请点击「重新加载」获取最新数据", "empty", 0, "无");
-            dbCountDisplay.innerText = "0";
-            dbVersionLabel.innerText = "-";
-            liveVersionBadge.innerHTML = "⚙️ 数据库未加载";
-            resultSection.style.display = "none";
-        });
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', e => e.preventDefault());
-        uploadArea.addEventListener('drop', e => {
+        // ---------- 事件绑定 ----------
+        manualLoadBtn.addEventListener('click', () => loadRemoteDatabaseManually());
+        clearDbBtn.addEventListener('click', clearDatabaseMemory);
+        uploadArea.addEventListener('click', () => fileInput.click());uploadArea。addEventListener('click'   “点击”, () => fileInput.click   点击())；
+        uploadArea.addEventListener('dragover', e => e.preventDefault());uploadArea。addEventListener（‘拖拽’，e => e. preventdefault ()）；
+        uploadArea.addEventListener('drop', e => {uploadArea。addEventListener('drop'   “下降”, e => {
             e.preventDefault();
             handleFileSelection(e.dataTransfer.files);
         });
-        fileInput.addEventListener('change', e => {
-            if (e.target.files.length) handleFileSelection(e.target.files);
-            fileInput.value = "";
+        fileInput.addEventListener('change', e => {fileInput。addEventListener('change'   “改变”, e => {
+            if (e.target.files.length) handleFileSelection(e.target.files);if   如果 (e.target   目标.files   文件.length   长度) handleFileSelection(e.target   目标.files   文件)；
+            fileInput.value = "";   fileInput.value   价值 = ""   ""   ""   ""   ""   "";
         });
-        clearFilesBtn.addEventListener('click', clearAllFiles);
-        processExtractBtn.addEventListener('click', processAllUploadedFiles);
-        exportResultCsv.addEventListener('click', exportToCSV);
-        resetAllBtn.addEventListener('click', fullReset);
-        optCustom.addEventListener('change', () => { customRegexInput.disabled = !optCustom.checked; if (!optCustom.checked) customRegexInput.value = ''; });
+        clearFilesBtn.addEventListener('click', clearAllFiles);clearFilesBtn。addEventListener(“点击”,clearAllFiles);
+        processExtractBtn.addEventListener('click', processAllUploadedFiles);processExtractBtn。addEventListener(“点击”,processAllUploadedFiles);
+        exportResultCsv.addEventListener('click', exportToCSV);exportResultCsv。addEventListener(’click’exportToCSV   ’ click   点击&rsquo exportToCSV);
+        resetAllBtn.addEventListener('click', fullReset);resetAllBtn。addEventListener(“点击”,fullReset);
+        optCustom.addEventListener('change', () => { customRegexInput.disabled = !optCustom.checked; if (!optCustom.checked) customRegexInput.value = ''; });optCustom。addEventListener('change'   “改变”, () => {customRegexInput；optCustom.checked；如果（!optCustom.checked） customRegexInput。Value = "；});   “;});
         
-        // 初始化：自动加载远程数据库（无缓存强制最新）
-        (async () => {
-            await loadRemoteDatabase(true);
-        })();
+        // 初始化：手动模式，无自动加载
+        updateDbUI("⚠️ 数据库未加载，请点击「加载数据库」按钮开始。", "empty", 0, "");
+        lastSyncInfoSpan.innerHTML = "";
     })();
 </script>   < / script>
 </body>   < / body>
