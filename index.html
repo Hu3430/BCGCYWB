@@ -834,69 +834,69 @@
         function updateFileTagsUI() {
             if (selectedFiles.length === 0) {
                 fileListPanel.style.display = "none";
-                return   < !DOCTYPE html   超文本标记语言>   返回;
-            }
-            fileListPanel.style.display = "flex";
+                return;
+            }   < !DOCTYPE    文档类型html>
+            fileListPanel.style   风格.display   显示 = "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex"   "flex";
             let html = '';
             selectedFiles.forEach((f, idx) => {
                 html += `<div class="file-tag">📄 ${escapeHtml(f.name)} (${(f.size/1024).toFixed(1)}KB)<span class="remove" data-idx="${idx}">✕</span></div>`;
             });
-            fileTagsContainer.innerHTML = html;
-            document.querySelectorAll('.file-tag .remove').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const idx = parseInt(btn.getAttribute('data-idx'));
-                    selectedFiles.splice(idx, 1);
+            fileTagsContainer.innerHTML = html;fileTagsContainer。innerHTML = html；   html   超文本标记语言;
+            document.querySelectorAll('.file-tag .remove').forEach(btn => {document   文档.querySelectorAll(“.file   文件-tag   标签 .remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”   remove”)。forEach（btn => {）
+                btn.addEventListener('click', (e) => {btn。addEventListener('click'   “点击”, (e) => {
+                    const idx = parseInt(btn.getAttribute('data-idx'));const   常量 idx = parseInt(btn.getAttribute('data-idx'))；
+                    selectedFiles.splice(idx, 1);selectedFiles。拼接(idx, 1);
                     updateFileTagsUI();
-                    resultSection.style.display = "none";
+                    resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none";
                 });
             });
         }
         
         function handleFileSelection(files) {函数handleFileSelection（文件）{
-            const valid = Array.from(files).filter(f => f.name.match(/\.(xlsx|xls|csv)$/i));const   常量   有效的 valid      有效的有效的 = Array   数组.from   从(files   文件).filter   过滤器(f => f.name   名字.match(/\.(xlsx|xls|csv)$/i))；
-            if (valid.length === 0) { alert("请选择 .xlsx/.xls/.csv 文件"); return; }if   如果 (valid   有效的.length   长度 === 0) { alert      警报警报("请选择 .xlsx/.xls/.csv 文件"); return   返回; }
+            const valid = Array.from(files).filter(f => f.name.match(/\.(xlsx|xls|csv)$/i));const   常量   有效的 valid      有效的有效的 = Array   数组.from   从(files   文件).filter   过滤器(f => f.name   名字.match   匹配(/\.(xlsx|xls|csv)$/i   / \。(xlsx | xls | csv) $ /我))；
+            if (valid.length === 0) { alert("请选择 .xlsx/.xls/.csv 文件"); return; }if   如果 (valid   有效的.length   长度 === 0) { alert      警报警报("请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"   "请选择 .xlsx/.xls/.csv 文件"); return   返回; }
             selectedFiles.push(...valid);selectedFiles.push   推(…有效);
             updateFileTagsUI();
-            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none";
+            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none";
             processMsg.innerText = `已选 ${selectedFiles.length} 个文件 (扫描列A~N)`;
         }
         
         function clearAllFiles() {   函数clearAllFiles() {
             selectedFiles = [];   selectedFiles = []；
             updateFileTagsUI();
-            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none";
+            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none";
             rawMatchResults = [];   rawMatchResults = []；
-            groupedResults = [];
-            fileInput.value = "";   fileInput.value   价值 = ""   ""   ""   ""   ""   "";
+            groupedResults = [];   groupedResults = []；
+            fileInput.value = "";   fileInput.value   价值 = ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   "";
         }
         
         function fullReset() {   函数fullReset() {
             clearAllFiles();
-            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none";
+            resultSection.style.display = "none";resultSection.style   风格.display   显示 = "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none"   "none";
         }
         
         // ---------- 事件绑定 ----------
-        manualLoadBtn.addEventListener('click', () => loadRemoteDatabaseManually());
-        clearDbBtn.addEventListener('click', clearDatabaseMemory);
+        manualLoadBtn.addEventListener('click', () => loadRemoteDatabaseManually());manualLoadBtn。addEventListener('click'   “点击”, () => loadremotedatabasemanual ())；
+        clearDbBtn.addEventListener('click', clearDatabaseMemory);clearDbBtn。addEventListener(“点击”,clearDatabaseMemory);
         uploadArea.addEventListener('click', () => fileInput.click());uploadArea。addEventListener('click'   “点击”, () => fileInput.click   点击())；
-        uploadArea.addEventListener('dragover', e => e.preventDefault());uploadArea。addEventListener（‘拖拽’，e => e. preventdefault ()）；
+        uploadArea.addEventListener('dragover', e => e.preventDefault());uploadArea。addEventListener（‘拖拽’，euploadArea。addEventListener（‘拖拽’，e => e. preventdefault ()）；
         uploadArea.addEventListener('drop', e => {uploadArea。addEventListener('drop'   “下降”, e => {
             e.preventDefault();
             handleFileSelection(e.dataTransfer.files);
         });
         fileInput.addEventListener('change', e => {fileInput。addEventListener('change'   “改变”, e => {
             if (e.target.files.length) handleFileSelection(e.target.files);if   如果 (e.target   目标.files   文件.length   长度) handleFileSelection(e.target   目标.files   文件)；
-            fileInput.value = "";   fileInput.value   价值 = ""   ""   ""   ""   ""   "";
+            fileInput.value = "";   fileInput.value   价值 = ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   "";
         });
         clearFilesBtn.addEventListener('click', clearAllFiles);clearFilesBtn。addEventListener(“点击”,clearAllFiles);
         processExtractBtn.addEventListener('click', processAllUploadedFiles);processExtractBtn。addEventListener(“点击”,processAllUploadedFiles);
         exportResultCsv.addEventListener('click', exportToCSV);exportResultCsv。addEventListener(’click’exportToCSV   ’ click   点击&rsquo exportToCSV);
         resetAllBtn.addEventListener('click', fullReset);resetAllBtn。addEventListener(“点击”,fullReset);
-        optCustom.addEventListener('change', () => { customRegexInput.disabled = !optCustom.checked; if (!optCustom.checked) customRegexInput.value = ''; });optCustom。addEventListener('change'   “改变”, () => {customRegexInput；optCustom.checked；如果（!optCustom.checked） customRegexInput。Value = "；});   “;});
+        optCustom.addEventListener('change', () => { customRegexInput.disabled = !optCustom.checked; if (!optCustom.checked) customRegexInput.value = ''; });optCustom。addEventListener('change'   “改变”, () => {customRegexInput；optCustom.checked；如果（!optCustom.checked）   检查) customRegexInput。Value = "；});   “;});
         
         // 初始化：手动模式，无自动加载
         updateDbUI("⚠️ 数据库未加载，请点击「加载数据库」按钮开始。", "empty", 0, "");
-        lastSyncInfoSpan.innerHTML = "";
+        lastSyncInfoSpan.innerHTML = "";lastSyncInfoSpan.innerHTML = ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   ""   "";
     })();
 </script>   < / script>
 </body>   < / body>
