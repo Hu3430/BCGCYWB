@@ -1,10 +1,10 @@
-<!DOCTYPE htm   米l>   < !DOCTYPE htm   米l>   < !DOCTYPE htm   米l>
-<      超文本标记语言< cs   年代s   年代   年代长= " zh-CN"   " zh-CN"   " zh-CN" >html lang="zh-CN">
+<!DOCTYPE htm   米l>& lt; !DOCTYPE htm htm >；   < !DOCTYPE htm   米l>   < !DOCTYPE htm   米l>
+<      超文本标记语言< cs   年代s   年代   年代长= " zh-CN"   " zh-CN"   " zh-CN"   " zh-CN" >html lang="zh-CN">
 <   <   头 hea   一个d   头>hea   一个d>
-       <m   米   米eta   一个   元 cha   一个rs   年代et   字符集   字符集="UTF-8"   "UTF-8"   "UTF-8"><meta   元   元 charset   字符集   字符集   字符集="UTF-8"   "UTF-8"   "UTF-8">
-    <m   米   米eta   一个 na   一个m   米   米e   名字="viewport"   "viewport"   "viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"><meta   元   元 name   名字   名字   名字="viewport"   "viewport"   "viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+       <m   米   米   米eta   一个   元 cha   一个rs   年代et   字符集   字符集="UTF-8"   "UTF-8"   "UTF-8"   "UTF-8"><meta   元   元   元 charset   字符集   字符集   字符集   字符集="UTF-8"   "UTF-8"   "UTF-8"   "UTF-8">
+    <m   米   米   米eta   一个 na   一个m   米   米e   名字="viewport"   "viewport"   "viewport"   "viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"><meta   元   元   元 name   名字   名字   名字   名字="viewport"   "viewport"   "viewport"   "viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <ti   我tle   标题>柜体表编码提取工具 | 手动加载数据库 | 状态聚合+未找到优先</   & lt;ti   我tle>
-       < s   年代   年代tyle><s   年代   年代tyle   风格   风格>
+       < s   年代   年代   年代tyle><s   年代   年代   年代tyle   风格   风格>
         * {
             box-s   年代i   我   我zi   我ng: border-box;
         }
